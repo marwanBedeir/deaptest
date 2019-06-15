@@ -1,0 +1,93 @@
+import numpy as np
+import string
+import random
+
+def initialFirstPopulation(populationSize, objectiveFun):
+    """
+
+    Parameters
+    ----------
+    populationSize : to know how many chromosomes this function will generate.
+    objectiveFun : to calculate to the fitness value immediately and save it with its chromosome.
+
+    Returns
+    -------
+    a list of tuple each tuple contain one chromosome and its fitness value.
+
+    """
+    population = []
+    for i in range(populationSize):
+        a = np.random.randint(0, 100)
+        b = np.random.randint(0, 100)
+        c = random.choice(string.ascii_lowercase)
+        population.append((objectiveFun(a, b, c), (a, b, c)))
+    return population
+
+def crossOver(parent1, parent2, objectiveFun):
+    a, b, c = parent1
+    a2, b2, c2 = parent2
+
+    x = [a, a2][np.random.randint(2)]
+    y = [b, b2][np.random.randint(2)]
+    z = [c, c2][np.random.randint(2)]
+
+    return objectiveFun(x, y, z), (x, y, z)
+
+def mutate(child, objectiveFun):
+    _, arg = child
+    a, b, c = arg
+    i = np.random.randint(3)
+    if i == 0:
+        if (a < 100)and(a > 0):
+            a = a + [1, -1][np.random.randint(2)]
+        elif a == 100:
+            a = a - 1
+        else:
+            a = a + 1
+    elif i == 2:
+        if (b < 100)and(b > 0):
+            b = b + [1, -1][np.random.randint(2)]
+        elif b == 100:
+            b = b - 1
+        else:
+            b = b + 1
+    else:
+        c = random.choice(string.ascii_lowercase)
+
+    return objectiveFun(a, b, c), (a, b, c)
+
+def genetic(objectiveFun, crossOverPer = 10, populationSize = 50, numberOfGenerations = 100):
+    fitnessPopulation = initialFirstPopulation(populationSize, objectiveFun)
+
+    fitnessPopulation.sort(reverse=True)  # sort parents according to fitness values
+
+    for generation in range(numberOfGenerations):
+        newFitnessPopulation = []
+        numberOfTop = int((crossOverPer/100) * populationSize)
+        top = fitnessPopulation[: numberOfTop]
+        for i in range(int(populationSize)):
+            x = random.randint(0, numberOfTop-1)
+            y = random.randint(0, numberOfTop-1)
+            _, parent1 = top[x]
+            _, parent2 = top[y]
+            child = crossOver(parent1, parent2, objectiveFun)
+            child = mutate(child, objectiveFun)
+            newFitnessPopulation.append(child)
+        fitnessPopulation = newFitnessPopulation
+        fitnessPopulation.sort(reverse=True)    # sort parents according to fitness values
+
+        print("\nGeneration number : " + str(generation + 1) + "\nBest one is : " + str(fitnessPopulation[0]) + "\nWorst one is :" + str(fitnessPopulation[-1]))
+    return fitnessPopulation[0]    # Best solution I found
+
+def objective_fn(v1, v2, v3):
+    v1_rnd = np.sum(-np.abs(v1 - np.random.randint(50, 55, [5, ])))
+    v2_rnd = np.sum(-np.abs(v1 - np.random.randint(15, 20, [5, ])))
+
+    v3 = ord(v3)
+    return -(v1 + v2 - v3) ** 2 + v1_rnd + v2_rnd
+
+def main():
+    print(genetic(objective_fn, 15, 100, 150))
+
+if __name__ == '__main__':
+    main()
